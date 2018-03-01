@@ -49,11 +49,13 @@ public class ClientControllerTest {
     
     @Before
     public void setup() throws Exception {
+    	
         this.mockMvc = webAppContextSetup(webApplicationContext).build();
         
         this.user1 = new Client("user1", "User Number One", "000.000.000-00");
         this.user2 = new Client("user2", "User Number Two", "000.000.000-00");
         
+        this.clientRepository.deleteAll();
         this.clientRepository.save(user1);
         this.clientRepository.save(user2);
     }
@@ -105,7 +107,7 @@ public class ClientControllerTest {
     	user1.setCpf("123.123.123-12");
     	String clientJson = json(user1);
     	
-    	mockMvc.perform(post("/clients")
+    	mockMvc.perform(put("/clients/" + user1.getId())
     		.content(clientJson)
     		.contentType(contentType))
     		.andExpect(status().isOk());
@@ -121,7 +123,14 @@ public class ClientControllerTest {
 
     @Test
     public void deleteClient() throws Exception {
+    	mockMvc.perform(get("/clients/" + user1.getId()))
+			.andExpect(status().isOk());
     	
+    	mockMvc.perform(delete("/clients/" + user1.getId()))
+        		.andExpect(status().isOk());
+
+    	mockMvc.perform(get("/clients/" + user1.getId()))
+			.andExpect(status().isNotFound());
     }
     
 
