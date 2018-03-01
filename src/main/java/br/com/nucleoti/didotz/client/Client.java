@@ -11,6 +11,10 @@ public class Client {
 	private String name;
 	private String cpf;
 	
+	public Client() {
+		
+	}
+	
 	public Client(String id, String name, String cpf) {
 		super();
 		this.id = id;
