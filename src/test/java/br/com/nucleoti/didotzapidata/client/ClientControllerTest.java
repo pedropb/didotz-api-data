@@ -81,18 +81,42 @@ public class ClientControllerTest {
 			.andExpect(jsonPath("$[1].cpf", is(user2.getCpf())));
     }
     
-//    @Test
-//    public void addClient() throws Exception {
-//    	String clientToBeAdded = json(new Client("user3", "User Number Three", "123.123.123-12"));
-//    	
-//    	mockMvc.perform(post("/clients", ))
-//    }
-//    
-//
-//    @Test
-//    public void updateClient() throws Exception {
-//    	
-//    }
+    @Test
+    public void addClient() throws Exception {
+    	Client newClient = new Client("user3", "New User", "123.123.123-12");
+    	String clientJson = json(newClient);
+    	
+    	mockMvc.perform(post("/clients")
+    		.content(clientJson)
+    		.contentType(contentType))
+    		.andExpect(status().isOk());
+    	
+    	mockMvc.perform(get("/clients/" + newClient.getId()))
+    		.andExpect(status().isOk())
+    		.andExpect(content().contentType(contentType))
+    		.andExpect(jsonPath("$.id", is(newClient.getId())))
+			.andExpect(jsonPath("$.name", is(newClient.getName())))
+			.andExpect(jsonPath("$.cpf", is(newClient.getCpf())));
+    }
+   
+    @Test
+    public void updateClient() throws Exception {
+    	user1.setName("Updated User");
+    	user1.setCpf("123.123.123-12");
+    	String clientJson = json(user1);
+    	
+    	mockMvc.perform(post("/clients")
+    		.content(clientJson)
+    		.contentType(contentType))
+    		.andExpect(status().isOk());
+    	
+    	mockMvc.perform(get("/clients/" + user1.getId()))
+    		.andExpect(status().isOk())
+    		.andExpect(content().contentType(contentType))
+    		.andExpect(jsonPath("$.id", is(user1.getId())))
+			.andExpect(jsonPath("$.name", is(user1.getName())))
+			.andExpect(jsonPath("$.cpf", is(user1.getCpf())));
+    }
     
 
     @Test
