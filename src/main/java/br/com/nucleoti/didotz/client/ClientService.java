@@ -27,6 +27,7 @@ public class ClientService {
 		clientRepository.save(client);		
 	}
 	
+	// TODO: refactor this to use id to update (safer)
 	public void updateClient(Client client) {
 		clientRepository.save(client);
 	}
