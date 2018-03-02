@@ -2,7 +2,6 @@ package br.com.nucleoti.didotzapidata.client;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.*;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.fail;
 
 import org.junit.Before;
 import org.junit.Test;

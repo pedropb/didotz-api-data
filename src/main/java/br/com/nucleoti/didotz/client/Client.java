@@ -16,7 +16,7 @@ public class Client {
 		
 	}
 	
-	public Client(String id, String name, String cpf, Double points) {
+	public Client(String id, String name, String cpf) {
 		super();
 		this.id = id;
 		this.name = name;
