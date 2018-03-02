@@ -13,3 +13,7 @@ This project is a Spring Boot Web Application that implements a REST API and per
 - Run `java -jar target/didotz-api-data-0.0.1-SNAPSHOT.jar`
 - Browse to [http://localhost:8080/clients](http://localhost:8080/clients) (you should see an empty JSON).
 - Run [Postman](https://www.getpostman.com/apps) and start submitting Requests against this server.
+
+### Running tests
+
+- `./mvnw test`
