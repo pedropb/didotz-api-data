@@ -1,4 +1,6 @@
-Didotz API Data
+[![Build Status](https://travis-ci.org/pedropb/didotz-api-data.svg?branch=develop)](https://travis-ci.org/pedropb/didotz-api-data)
+
+Didotz API Data 
 ===============
 
 This project is a Spring Boot Web Application that implements a REST API and persistence layer for a simple [Rewards program](https://en.wikipedia.org/wiki/Loyalty_program).
