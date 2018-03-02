@@ -1,7 +1,6 @@
 package br.com.nucleoti.didotzapidata.client;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.*;
-import static io.restassured.module.mockmvc.matcher.RestAssuredMockMvcMatchers.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
 
@@ -14,8 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import br.com.nucleoti.didotz.DidotzApiDataApplication;
 import br.com.nucleoti.didotz.client.Client;
+import br.com.nucleoti.didotz.DidotzApiDataApplication;
 import br.com.nucleoti.didotz.client.ClientRepository;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
 
@@ -77,6 +76,7 @@ public class ClientControllerTest {
 	public void addClient() {
 		Client clientToBeAdded = new Client("client3", "Client Added", "some cpf"); 
 		
+		// create client
 		given().
 			contentType("application/json").
 			body(clientToBeAdded).
@@ -85,6 +85,7 @@ public class ClientControllerTest {
 		then().
 			statusCode(200);
 		
+		// check if client was added
 		when().
 			get("/clients/{id}", clientToBeAdded.getId()).
 		then().
@@ -94,12 +95,40 @@ public class ClientControllerTest {
 	
 	@Test
 	public void updateClient() {
-		fail("Test not implemented");
+		Client clientToBeUpdated = new Client("client1", "Name Updated", "updated cpf"); 
+		
+		// update client
+		given().
+			contentType("application/json").
+			body(clientToBeUpdated).
+		when().
+			put("/clients/{id}", clientToBeUpdated.getId()).
+		then().
+			statusCode(200);
+		
+		// check if client was updated
+		when().
+			get("/clients/{id}", clientToBeUpdated.getId()).
+		then().
+			statusCode(200).
+			body("name", equalTo(clientToBeUpdated.getName())).
+			body("cpf", equalTo(clientToBeUpdated.getCpf()));
 	}
 	
 	@Test
 	public void deleteClient() {
-		fail("Test not implemented");
+		// delete client
+		when().
+			delete("/clients/{id}", client1.getId()).
+		then().
+			statusCode(200);
+		
+		// check if client was deleted
+		when().
+			get("/clients/{id}", client1.getId()).
+		then().
+			statusCode(404).
+			body(isEmptyOrNullString());
 	}
 	
 	
