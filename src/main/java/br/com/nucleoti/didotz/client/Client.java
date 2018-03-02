@@ -10,16 +10,18 @@ public class Client {
 	private String id;
 	private String name;
 	private String cpf;
+	private Double points;
 	
 	public Client() {
 		
 	}
 	
-	public Client(String id, String name, String cpf) {
+	public Client(String id, String name, String cpf, Double points) {
 		super();
 		this.id = id;
 		this.name = name;
 		this.cpf = cpf;
+		this.points = 0.0;
 	}
 	
 	public String getId() {
@@ -39,5 +41,13 @@ public class Client {
 	}
 	public void setCpf(String cpf) {
 		this.cpf = cpf;
+	}
+
+	public Double getPoints() {
+		return points;
+	}
+
+	public void setPoints(Double points) {
+		this.points = points;
 	}
 }
