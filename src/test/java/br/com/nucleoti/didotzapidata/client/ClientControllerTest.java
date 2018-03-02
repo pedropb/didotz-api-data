@@ -30,17 +30,17 @@ public class ClientControllerTest {
     @Autowired
     private ClientRepository clientRepository;
 
-	private Client user1, user2;
+	private Client client1, client2;
 
 	
 	@Before
 	public void setup() {
-		this.user1 = new Client("user1", "User Number One", "000.000.000-00");
-        this.user2 = new Client("user2", "User Number Two", "000.000.000-00");
+		this.client1 = new Client("client1", "Client Number One", "000.000.000-00");
+        this.client2 = new Client("client2", "Client Number Two", "000.000.000-00");
         
         this.clientRepository.deleteAll();
-        this.clientRepository.save(user1);
-        this.clientRepository.save(user2);
+        this.clientRepository.save(client1);
+        this.clientRepository.save(client2);
 		
 		RestAssuredMockMvc.mockMvc(mockMvc);
 	}
@@ -48,10 +48,10 @@ public class ClientControllerTest {
 	@Test
 	public void getClientById() {
 		when().
-			get("/clients/{id}", user1.getId()).
+			get("/clients/{id}", client1.getId()).
 		then().
 			statusCode(200).
-			body("id", equalTo(user1.getId()));
+			body("id", equalTo(client1.getId()));
 	}
 	
 	@Test
@@ -65,12 +65,31 @@ public class ClientControllerTest {
 	
 	@Test
 	public void getAllClients() {
-		fail("Test not implemented");
+		when().
+			get("/clients").
+		then().
+			statusCode(200).
+			body("id", hasItems(client1.getId(), client2.getId()));
+			
 	}
 	
 	@Test
 	public void addClient() {
-		fail("Test not implemented");
+		Client clientToBeAdded = new Client("client3", "Client Added", "some cpf"); 
+		
+		given().
+			contentType("application/json").
+			body(clientToBeAdded).
+		when().
+			post("/clients").
+		then().
+			statusCode(200);
+		
+		when().
+			get("/clients/{id}", clientToBeAdded.getId()).
+		then().
+			statusCode(200).
+			body("id", equalTo(clientToBeAdded.getId()));
 	}
 	
 	@Test
