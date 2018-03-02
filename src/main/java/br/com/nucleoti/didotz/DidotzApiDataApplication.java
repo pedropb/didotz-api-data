@@ -1,4 +1,4 @@
-package br.com.nucleoti;
+package br.com.nucleoti.didotz;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
