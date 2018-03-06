@@ -22,6 +22,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.nucleoti.didotz.DidotzApiDataApplication;
@@ -47,6 +49,10 @@ public class ClientControllerTest {
     
     @Autowired
     private WebApplicationContext webApplicationContext;
+    
+    private String json(Object obj) throws JsonProcessingException {
+    	return mapper.writeValueAsString(obj);
+    }
     
     @Before
     public void setup() throws Exception {
@@ -93,7 +99,7 @@ public class ClientControllerTest {
     @Test public void 
     add_client_and_get_it_and_return_ok() throws Exception {
     	Client newClient = new Client("user3", "New Client", "123.123.123-12");
-    	String clientJson = mapper.writeValueAsString(newClient);
+    	String clientJson = json(newClient);
     	
     	mockMvc.perform(post("/clients")
     		.content(clientJson)
@@ -112,7 +118,7 @@ public class ClientControllerTest {
     update_client_and_get_it_and_return_ok() throws Exception {
     	client1.setName("Updated Client");
     	client1.setCpf("123.123.123-12");
-    	String clientJson = mapper.writeValueAsString(client1);
+    	String clientJson = json(client1);
     	
     	mockMvc.perform(put("/clients/" + client1.getId())
     		.content(clientJson)
