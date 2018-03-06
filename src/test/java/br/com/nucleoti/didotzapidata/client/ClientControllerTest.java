@@ -1,134 +1,159 @@
 package br.com.nucleoti.didotzapidata.client;
 
-import static io.restassured.module.mockmvc.RestAssuredMockMvc.*;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
 
-import br.com.nucleoti.didotz.client.Client;
 import br.com.nucleoti.didotz.DidotzApiDataApplication;
+import br.com.nucleoti.didotz.client.Client;
 import br.com.nucleoti.didotz.client.ClientRepository;
-import io.restassured.module.mockmvc.RestAssuredMockMvc;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes=DidotzApiDataApplication.class)
-@AutoConfigureMockMvc
+@SpringBootTest(classes = DidotzApiDataApplication.class)
+@WebAppConfiguration
 public class ClientControllerTest {
 	
-	@Autowired
-	private MockMvc mockMvc;
-	
+	private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
+            MediaType.APPLICATION_JSON.getSubtype(),
+            Charset.forName("utf8"));
+
+    private MockMvc mockMvc;
+    
+    private Client user1, user2;
+    
     @Autowired
     private ClientRepository clientRepository;
-
-	private Client client1, client2;
-
-	
-	@Before
-	public void setup() {
-		this.client1 = new Client("client1", "Client Number One", "000.000.000-00");
-        this.client2 = new Client("client2", "Client Number Two", "000.000.000-00");
+    
+    @Autowired
+    private WebApplicationContext webApplicationContext;
+    
+    @Before
+    public void setup() throws Exception {
+    	
+        this.mockMvc = webAppContextSetup(webApplicationContext).build();
+        
+        this.user1 = new Client("user1", "User Number One", "000.000.000-00");
+        this.user2 = new Client("user2", "User Number Two", "000.000.000-00");
         
         this.clientRepository.deleteAll();
-        this.clientRepository.save(client1);
-        this.clientRepository.save(client2);
-		
-		RestAssuredMockMvc.mockMvc(mockMvc);
-	}
-	
-	@Test
-	public void getClientById() {
-		when().
-			get("/clients/{id}", client1.getId()).
-		then().
-			statusCode(200).
-			body("id", equalTo(client1.getId()));
-	}
-	
-	@Test
-	public void clientNotFound() {
-		when().
-			get("/clients/{id}", "3").
-		then().
-			statusCode(404).
-			body(isEmptyOrNullString());
-	}
-	
-	@Test
-	public void getAllClients() {
-		when().
-			get("/clients").
-		then().
-			statusCode(200).
-			body("id", hasItems(client1.getId(), client2.getId()));
-			
-	}
-	
-	@Test
-	public void addClient() {
-		Client clientToBeAdded = new Client("client3", "Client Added", "some cpf"); 
-		
-		// create client
-		given().
-			contentType("application/json").
-			body(clientToBeAdded).
-		when().
-			post("/clients").
-		then().
-			statusCode(200);
-		
-		// check if client was added
-		when().
-			get("/clients/{id}", clientToBeAdded.getId()).
-		then().
-			statusCode(200).
-			body("id", equalTo(clientToBeAdded.getId()));
-	}
-	
-	@Test
-	public void updateClient() {
-		Client clientToBeUpdated = new Client("client1", "Name Updated", "updated cpf"); 
-		
-		// update client
-		given().
-			contentType("application/json").
-			body(clientToBeUpdated).
-		when().
-			put("/clients/{id}", clientToBeUpdated.getId()).
-		then().
-			statusCode(200);
-		
-		// check if client was updated
-		when().
-			get("/clients/{id}", clientToBeUpdated.getId()).
-		then().
-			statusCode(200).
-			body("name", equalTo(clientToBeUpdated.getName())).
-			body("cpf", equalTo(clientToBeUpdated.getCpf()));
-	}
-	
-	@Test
-	public void deleteClient() {
-		// delete client
-		when().
-			delete("/clients/{id}", client1.getId()).
-		then().
-			statusCode(200);
-		
-		// check if client was deleted
-		when().
-			get("/clients/{id}", client1.getId()).
-		then().
-			statusCode(404).
-			body(isEmptyOrNullString());
-	}
-	
-	
+        this.clientRepository.save(user1);
+        this.clientRepository.save(user2);
+    }
+    
+    @Test
+    public void readSingleClient() throws Exception {
+    	mockMvc.perform(get("/clients/" + user1.getId()))
+    		.andExpect(status().isOk())
+    		.andExpect(content().contentType(contentType))
+    		.andExpect(jsonPath("$.id", is(user1.getId())))
+			.andExpect(jsonPath("$.name", is(user1.getName())))
+			.andExpect(jsonPath("$.cpf", is(user1.getCpf())));
+    }
+    
+    @Test
+    public void readAllClients() throws Exception {
+    	mockMvc.perform(get("/clients"))
+    		.andExpect(status().isOk())
+    		.andExpect(content().contentType(contentType))
+    		.andExpect(jsonPath("$[0].id", is(user1.getId())))
+			.andExpect(jsonPath("$[0].name", is(user1.getName())))
+			.andExpect(jsonPath("$[0].cpf", is(user1.getCpf())))
+			.andExpect(jsonPath("$[1].name", is(user2.getName())))
+			.andExpect(jsonPath("$[1].id", is(user2.getId())))
+			.andExpect(jsonPath("$[1].cpf", is(user2.getCpf())));
+    }
+    
+    @Test
+    public void addClient() throws Exception {
+    	Client newClient = new Client("user3", "New User", "123.123.123-12");
+    	String clientJson = json(newClient);
+    	
+    	mockMvc.perform(post("/clients")
+    		.content(clientJson)
+    		.contentType(contentType))
+    		.andExpect(status().isOk());
+    	
+    	mockMvc.perform(get("/clients/" + newClient.getId()))
+    		.andExpect(status().isOk())
+    		.andExpect(content().contentType(contentType))
+    		.andExpect(jsonPath("$.id", is(newClient.getId())))
+			.andExpect(jsonPath("$.name", is(newClient.getName())))
+			.andExpect(jsonPath("$.cpf", is(newClient.getCpf())));
+    }
+   
+    @Test
+    public void updateClient() throws Exception {
+    	user1.setName("Updated User");
+    	user1.setCpf("123.123.123-12");
+    	String clientJson = json(user1);
+    	
+    	mockMvc.perform(put("/clients/" + user1.getId())
+    		.content(clientJson)
+    		.contentType(contentType))
+    		.andExpect(status().isOk());
+    	
+    	mockMvc.perform(get("/clients/" + user1.getId()))
+    		.andExpect(status().isOk())
+    		.andExpect(content().contentType(contentType))
+    		.andExpect(jsonPath("$.id", is(user1.getId())))
+			.andExpect(jsonPath("$.name", is(user1.getName())))
+			.andExpect(jsonPath("$.cpf", is(user1.getCpf())));
+    }
+    
+
+    @Test
+    public void deleteClient() throws Exception {
+    	mockMvc.perform(get("/clients/" + user1.getId()))
+			.andExpect(status().isOk());
+    	
+    	mockMvc.perform(delete("/clients/" + user1.getId()))
+        		.andExpect(status().isOk());
+
+    	mockMvc.perform(get("/clients/" + user1.getId()))
+			.andExpect(status().isNotFound());
+    }
+    
+
+    // Methods and attributes for the logic responsible to convert an object to JSON string
+    private HttpMessageConverter mappingJackson2HttpMessageConverter;
+    
+    @Autowired
+    void setConverters(HttpMessageConverter<?>[] converters) {
+
+        this.mappingJackson2HttpMessageConverter = Arrays.asList(converters).stream()
+            .filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter)
+            .findAny()
+            .orElse(null);
+
+        assertNotNull("the JSON message converter must not be null",
+                this.mappingJackson2HttpMessageConverter);
+    }
+    
+    protected String json(Object o) throws IOException {
+        MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
+        this.mappingJackson2HttpMessageConverter.write(
+                o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
+        return mockHttpOutputMessage.getBodyAsString();
+    }
+
 }
