@@ -1,0 +1,29 @@
+= ClientController
+Pedro Baracho;
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+
+== GET /clients/{id}
+
+operation::get-client[snippets='http-request,http-response']
+
+
+== GET /clients
+
+operation::get-all-clients[snippets='http-request,http-response']
+
+
+== POST /clients/{id}
+
+operation::add-client[snippets='http-request,http-response']
+
+
+== PUT /clients/{id}
+
+operation::update-client[snippets='http-request,http-response']
+
+
+== DELETE /clients/{id}
+
+operation::delete-client[snippets='http-request,http-response']

@@ -9,10 +9,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 
 import java.nio.charset.Charset;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +29,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.restdocs.JUnitRestDocumentation;
+import org.springframework.restdocs.hypermedia.LinksSnippet;
+import org.springframework.restdocs.payload.ResponseFieldsSnippet;
+import org.springframework.restdocs.request.PathParametersSnippet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +53,23 @@ public class ClientControllerTest {
     private MockMvc mockMvc;
     private ObjectMapper mapper = new ObjectMapper();
     
+    protected final 
+    PathParametersSnippet clientIdPathParameter = pathParameters(
+    		parameterWithName("id").description("The client's id."));
+    
+    protected final 
+    ResponseFieldsSnippet clientResponseFields = responseFields(
+			fieldWithPath("id").description("The client's id."),
+			fieldWithPath("name").description("The client's name."),
+			fieldWithPath("cpf").description("The client's cpf."),
+			fieldWithPath("points").description("The client's points.")
+			);
+    
+    
+    
+    @Rule
+    public JUnitRestDocumentation restDocumentation = new JUnitRestDocumentation();
+    
     private Client client1, client2;
     
     @Autowired
@@ -57,7 +85,9 @@ public class ClientControllerTest {
     @Before
     public void setup() throws Exception {
     	
-        this.mockMvc = webAppContextSetup(webApplicationContext).build();
+        this.mockMvc = webAppContextSetup(webApplicationContext)
+        		.apply(documentationConfiguration(this.restDocumentation))
+        		.build();
         
         this.client1 = new Client("client1", "Client Number One", "000.000.000-00");
         this.client2 = new Client("client2", "Client Number Two", "000.000.000-00");
@@ -69,12 +99,14 @@ public class ClientControllerTest {
     
     @Test public void
     get_client_and_return_ok() throws Exception {
-    	mockMvc.perform(get("/clients/" + client1.getId()))
+    	mockMvc.perform(get("/clients/{id}", client1.getId())
+			.accept(MediaType.APPLICATION_JSON))
     		.andExpect(status().isOk())
     		.andExpect(content().contentType(contentType))
     		.andExpect(jsonPath("$.id", is(client1.getId())))
 			.andExpect(jsonPath("$.name", is(client1.getName())))
-			.andExpect(jsonPath("$.cpf", is(client1.getCpf())));
+			.andExpect(jsonPath("$.cpf", is(client1.getCpf())))
+    		.andDo(document("get-client", clientResponseFields));
     }
 
     @Test public void
@@ -93,7 +125,8 @@ public class ClientControllerTest {
 			.andExpect(jsonPath("$[0].cpf", is(client1.getCpf())))
 			.andExpect(jsonPath("$[1].name", is(client2.getName())))
 			.andExpect(jsonPath("$[1].id", is(client2.getId())))
-			.andExpect(jsonPath("$[1].cpf", is(client2.getCpf())));
+			.andExpect(jsonPath("$[1].cpf", is(client2.getCpf())))
+    		.andDo(document("get-all-clients"));
     }
     
     @Test public void 
@@ -104,7 +137,8 @@ public class ClientControllerTest {
     	mockMvc.perform(post("/clients")
     		.content(clientJson)
     		.contentType(contentType))
-    		.andExpect(status().isOk());
+    		.andExpect(status().isOk())
+    		.andDo(document("add-client"));
     	
     	mockMvc.perform(get("/clients/" + newClient.getId()))
     		.andExpect(status().isOk())
@@ -123,7 +157,8 @@ public class ClientControllerTest {
     	mockMvc.perform(put("/clients/" + client1.getId())
     		.content(clientJson)
     		.contentType(contentType))
-    		.andExpect(status().isOk());
+    		.andExpect(status().isOk())
+    		.andDo(document("update-client"));
     	
     	mockMvc.perform(get("/clients/" + client1.getId()))
     		.andExpect(status().isOk())
@@ -135,12 +170,13 @@ public class ClientControllerTest {
     
 
     @Test public void
-    delete_client_and_get_it_and_return_not_found() throws Exception {
+    get_client_and_delete_it_and_get_it_and_return_not_found() throws Exception {
     	mockMvc.perform(get("/clients/" + client1.getId()))
 			.andExpect(status().isOk());
     	
     	mockMvc.perform(delete("/clients/" + client1.getId()))
-        		.andExpect(status().isOk());
+        		.andExpect(status().isOk())
+        		.andDo(document("delete-client"));
 
     	mockMvc.perform(get("/clients/" + client1.getId()))
 			.andExpect(status().isNotFound());
