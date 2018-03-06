@@ -1,14 +1,16 @@
 package br.com.nucleoti.didotzapidata.client;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -16,13 +18,11 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.nucleoti.didotz.DidotzApiDataApplication;
 import br.com.nucleoti.didotz.client.Client;
@@ -38,8 +38,9 @@ public class ClientControllerTest {
             Charset.forName("utf8"));
 
     private MockMvc mockMvc;
+    private ObjectMapper mapper = new ObjectMapper();
     
-    private Client user1, user2;
+    private Client client1, client2;
     
     @Autowired
     private ClientRepository clientRepository;
@@ -52,41 +53,47 @@ public class ClientControllerTest {
     	
         this.mockMvc = webAppContextSetup(webApplicationContext).build();
         
-        this.user1 = new Client("user1", "User Number One", "000.000.000-00");
-        this.user2 = new Client("user2", "User Number Two", "000.000.000-00");
+        this.client1 = new Client("client1", "Client Number One", "000.000.000-00");
+        this.client2 = new Client("client2", "Client Number Two", "000.000.000-00");
         
         this.clientRepository.deleteAll();
-        this.clientRepository.save(user1);
-        this.clientRepository.save(user2);
+        this.clientRepository.save(client1);
+        this.clientRepository.save(client2);
     }
     
-    @Test
-    public void readSingleClient() throws Exception {
-    	mockMvc.perform(get("/clients/" + user1.getId()))
+    @Test public void
+    get_client_and_return_ok() throws Exception {
+    	mockMvc.perform(get("/clients/" + client1.getId()))
     		.andExpect(status().isOk())
     		.andExpect(content().contentType(contentType))
-    		.andExpect(jsonPath("$.id", is(user1.getId())))
-			.andExpect(jsonPath("$.name", is(user1.getName())))
-			.andExpect(jsonPath("$.cpf", is(user1.getCpf())));
+    		.andExpect(jsonPath("$.id", is(client1.getId())))
+			.andExpect(jsonPath("$.name", is(client1.getName())))
+			.andExpect(jsonPath("$.cpf", is(client1.getCpf())));
+    }
+
+    @Test public void
+    get_client_and_return_not_found() throws Exception {
+    	mockMvc.perform(get("/clients/NonExistentClient"))
+    		.andExpect(status().isNotFound());
     }
     
-    @Test
-    public void readAllClients() throws Exception {
+    @Test public void 
+    get_all_clients_and_return_ok() throws Exception {
     	mockMvc.perform(get("/clients"))
     		.andExpect(status().isOk())
     		.andExpect(content().contentType(contentType))
-    		.andExpect(jsonPath("$[0].id", is(user1.getId())))
-			.andExpect(jsonPath("$[0].name", is(user1.getName())))
-			.andExpect(jsonPath("$[0].cpf", is(user1.getCpf())))
-			.andExpect(jsonPath("$[1].name", is(user2.getName())))
-			.andExpect(jsonPath("$[1].id", is(user2.getId())))
-			.andExpect(jsonPath("$[1].cpf", is(user2.getCpf())));
+    		.andExpect(jsonPath("$[0].id", is(client1.getId())))
+			.andExpect(jsonPath("$[0].name", is(client1.getName())))
+			.andExpect(jsonPath("$[0].cpf", is(client1.getCpf())))
+			.andExpect(jsonPath("$[1].name", is(client2.getName())))
+			.andExpect(jsonPath("$[1].id", is(client2.getId())))
+			.andExpect(jsonPath("$[1].cpf", is(client2.getCpf())));
     }
     
-    @Test
-    public void addClient() throws Exception {
-    	Client newClient = new Client("user3", "New User", "123.123.123-12");
-    	String clientJson = json(newClient);
+    @Test public void 
+    add_client_and_get_it_and_return_ok() throws Exception {
+    	Client newClient = new Client("user3", "New Client", "123.123.123-12");
+    	String clientJson = mapper.writeValueAsString(newClient);
     	
     	mockMvc.perform(post("/clients")
     		.content(clientJson)
@@ -101,59 +108,35 @@ public class ClientControllerTest {
 			.andExpect(jsonPath("$.cpf", is(newClient.getCpf())));
     }
    
-    @Test
-    public void updateClient() throws Exception {
-    	user1.setName("Updated User");
-    	user1.setCpf("123.123.123-12");
-    	String clientJson = json(user1);
+    @Test public void 
+    update_client_and_get_it_and_return_ok() throws Exception {
+    	client1.setName("Updated Client");
+    	client1.setCpf("123.123.123-12");
+    	String clientJson = mapper.writeValueAsString(client1);
     	
-    	mockMvc.perform(put("/clients/" + user1.getId())
+    	mockMvc.perform(put("/clients/" + client1.getId())
     		.content(clientJson)
     		.contentType(contentType))
     		.andExpect(status().isOk());
     	
-    	mockMvc.perform(get("/clients/" + user1.getId()))
+    	mockMvc.perform(get("/clients/" + client1.getId()))
     		.andExpect(status().isOk())
     		.andExpect(content().contentType(contentType))
-    		.andExpect(jsonPath("$.id", is(user1.getId())))
-			.andExpect(jsonPath("$.name", is(user1.getName())))
-			.andExpect(jsonPath("$.cpf", is(user1.getCpf())));
+    		.andExpect(jsonPath("$.id", is(client1.getId())))
+			.andExpect(jsonPath("$.name", is(client1.getName())))
+			.andExpect(jsonPath("$.cpf", is(client1.getCpf())));
     }
     
 
-    @Test
-    public void deleteClient() throws Exception {
-    	mockMvc.perform(get("/clients/" + user1.getId()))
+    @Test public void
+    delete_client_and_get_it_and_return_not_found() throws Exception {
+    	mockMvc.perform(get("/clients/" + client1.getId()))
 			.andExpect(status().isOk());
     	
-    	mockMvc.perform(delete("/clients/" + user1.getId()))
+    	mockMvc.perform(delete("/clients/" + client1.getId()))
         		.andExpect(status().isOk());
 
-    	mockMvc.perform(get("/clients/" + user1.getId()))
+    	mockMvc.perform(get("/clients/" + client1.getId()))
 			.andExpect(status().isNotFound());
     }
-    
-
-    // Methods and attributes for the logic responsible to convert an object to JSON string
-    private HttpMessageConverter mappingJackson2HttpMessageConverter;
-    
-    @Autowired
-    void setConverters(HttpMessageConverter<?>[] converters) {
-
-        this.mappingJackson2HttpMessageConverter = Arrays.asList(converters).stream()
-            .filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter)
-            .findAny()
-            .orElse(null);
-
-        assertNotNull("the JSON message converter must not be null",
-                this.mappingJackson2HttpMessageConverter);
-    }
-    
-    protected String json(Object o) throws IOException {
-        MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
-        this.mappingJackson2HttpMessageConverter.write(
-                o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
-        return mockHttpOutputMessage.getBodyAsString();
-    }
-
 }
